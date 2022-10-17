@@ -1,0 +1,15 @@
+# curl 'http://127.0.0.1:8880/demo/dao?id=1'
+GET http://127.0.0.1:8880/demo/dao?id=1
+
+###
+
+# curl 'http://127.0.0.1:8880/demo/bind?name=name&locale=zh'
+GET http://127.0.0.1:8880/demo/bind?name=name&locale=zh
+
+###
+
+# curl 'http://127.0.0.1:8880/demo/bind?name=name&locale=en'
+GET http://127.0.0.1:8880/demo/bind?name=name&locale=en
+
+###
+
