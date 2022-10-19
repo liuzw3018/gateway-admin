@@ -2,7 +2,7 @@
 
 [base]
     debug_mode="debug"
-    time_location="Asia/Chongqing"
+    time_location="Asia/Shanghai"
 
 [http]
     addr =":8880"                       # 监听地址, default ":8700"
@@ -25,9 +25,14 @@
     [log.console_writer]        #工作台输出
         on = false
         color = false
+[cluster]
+    cluster_ip="127.0.0.1"
+    cluster_port="8880"
+    cluster_ssl_port="4880"
+    cluster_domain=""
 
 [swagger]
-    title="gin_scaffold swagger API"
+    title="gateway_admin swagger API"
     desc="This is a sample server celler server."
     host="127.0.0.1:8880"
     base_path=""

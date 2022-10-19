@@ -4,11 +4,12 @@ import (
 	"github.com/e421083458/golang_common/lib"
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/liuzw3018/gateway_admin/controller"
+	v1 "github.com/liuzw3018/gateway_admin/controller/v1"
 	"github.com/liuzw3018/gateway_admin/docs"
 	"github.com/liuzw3018/gateway_admin/middleware"
 	"github.com/swaggo/files"
 	"github.com/swaggo/gin-swagger"
+	"log"
 )
 
 // @title Swagger Example API
@@ -67,41 +68,41 @@ func InitRouter(middlewares ...gin.HandlerFunc) *gin.Engine {
 
 	router := gin.Default()
 	router.Use(middlewares...)
-	router.GET("/ping", func(c *gin.Context) {
+	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"message": "pong",
+			"message": "ok",
 		})
 	})
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	//demo
-	v1 := router.Group("/demo")
-	v1.Use(middleware.RecoveryMiddleware(), middleware.RequestLog(), middleware.IPAuthMiddleware(), middleware.TranslationMiddleware())
-	{
-		controller.DemoRegister(v1)
+	store, err := sessions.NewRedisStore(10, "tcp", "101.43.247.25:19736", "114514", []byte("secret"))
+	if err != nil {
+		log.Fatalf("sessions.NewRedisStore err: %v\n", err)
 	}
 
-	//非登陆接口
-	store := sessions.NewCookieStore([]byte("secret"))
-	apiNormalGroup := router.Group("/api")
-	apiNormalGroup.Use(sessions.Sessions("mysession", store),
+	// 基础路由
+	baseRouterGroup := router.Group("/api")
+	baseRouterGroup.Use(
+		sessions.Sessions("gatewaySession", store),
 		middleware.RecoveryMiddleware(),
 		middleware.RequestLog(),
-		middleware.TranslationMiddleware())
+		middleware.TranslationMiddleware(),
+	)
 	{
-		controller.ApiRegister(apiNormalGroup)
+		v1.AdminLoginApiRegister(baseRouterGroup)
 	}
 
-	//登陆接口
-	apiAuthGroup := router.Group("/api")
-	apiAuthGroup.Use(
-		sessions.Sessions("mysession", store),
-		middleware.RecoveryMiddleware(),
-		middleware.RequestLog(),
+	// 登录后 api
+	sessionRouterGroup := baseRouterGroup
+	sessionRouterGroup.Use(
 		middleware.SessionAuthMiddleware(),
-		middleware.TranslationMiddleware())
+	)
 	{
-		controller.ApiLoginRegister(apiAuthGroup)
+		v1.AdminApiRegister(sessionRouterGroup)
+		v1.ServiceApiRegister(sessionRouterGroup)
+		v1.APPApiRegister(sessionRouterGroup)
+		v1.DashboardApiRegister(sessionRouterGroup)
 	}
+
 	return router
 }
