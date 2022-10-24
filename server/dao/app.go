@@ -54,8 +54,8 @@ func (t *App) Save(c *gin.Context, tx *gorm.DB) error {
 func (t *App) APPList(c *gin.Context, tx *gorm.DB, params *dto.APPListInput) ([]App, int64, error) {
 	var list []App
 	var count int64
-	pageNo := params.PageNo
-	pageSize := params.PageSize
+	pageNo := params.Page
+	pageSize := params.Limit
 
 	//limit offset,pagesize
 	offset := (pageNo - 1) * pageSize
@@ -112,7 +112,7 @@ func (s *AppManager) LoadOnce() error {
 			s.err = err
 			return
 		}
-		params := &dto.APPListInput{PageNo: 1, PageSize: 99999}
+		params := &dto.APPListInput{Page: 1, Limit: 99999}
 		list, _, err := appInfo.APPList(c, tx, params)
 		if err != nil {
 			s.err = err

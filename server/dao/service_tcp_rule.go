@@ -29,6 +29,9 @@ func (tr *TcpRule) Find(c *gin.Context, tx *gorm.DB, search *TcpRule) (*TcpRule,
 	if err != nil {
 		return nil, err
 	}
+	if out.Port == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
 	return out, nil
 }
 

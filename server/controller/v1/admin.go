@@ -112,7 +112,7 @@ func (a *AdminApi) ChangePwd(c *gin.Context) {
 		return
 	}
 
-	middleware.ResponseSuccess(c, "")
+	middleware.ResponseSuccess(c, "OK")
 }
 
 // ChangeInfo godoc

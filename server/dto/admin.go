@@ -24,6 +24,7 @@ type AdminInfoOutput struct {
 }
 
 type ChangePwdInput struct {
+	//OldPassword string `json:"old_password" form:"old_password" comment:"旧密码" example:"123456" validate:"required"` // 旧密码
 	Password string `json:"password" form:"password" comment:"密码" example:"123456" validate:"required"` // 密码
 }
 

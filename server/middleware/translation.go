@@ -65,8 +65,8 @@ func TranslationMiddleware() gin.HandlerFunc {
 				if fl.Field().String() == "" {
 					return true
 				}
-				for _, ms := range strings.Split(fl.Field().String(), "\n") {
-					if len(strings.Split(ms, "")) != 2 {
+				for _, ms := range strings.Split(fl.Field().String(), ",") {
+					if len(strings.Split(ms, " ")) != 2 {
 						return false
 					}
 				}
@@ -76,8 +76,8 @@ func TranslationMiddleware() gin.HandlerFunc {
 				if fl.Field().String() == "" {
 					return true
 				}
-				for _, ms := range strings.Split(fl.Field().String(), "\n") {
-					if len(strings.Split(ms, "")) != 3 {
+				for _, ms := range strings.Split(fl.Field().String(), ",") {
+					if len(strings.Split(ms, " ")) != 3 {
 						return false
 					}
 				}
@@ -85,15 +85,19 @@ func TranslationMiddleware() gin.HandlerFunc {
 			})
 
 			val.RegisterValidation("validIpList", func(fl validator.FieldLevel) bool {
-				for _, ms := range strings.Split(fl.Field().String(), "\n") {
-					if match, _ := regexp.Match(`^\S+:\d+$`, []byte(ms)); !match {
+				if fl.Field().String() == "" {
+					return true
+				}
+				for _, item := range strings.Split(fl.Field().String(), ",") {
+					matched, _ := regexp.Match(`\S+`, []byte(item)) //ip_addr
+					if !matched {
 						return false
 					}
 				}
 				return true
 			})
 			val.RegisterValidation("validWeightList", func(fl validator.FieldLevel) bool {
-				for _, ms := range strings.Split(fl.Field().String(), "\n") {
+				for _, ms := range strings.Split(fl.Field().String(), ",") {
 					if match, _ := regexp.Match(`^\d+$`, []byte(ms)); !match {
 						return false
 					}

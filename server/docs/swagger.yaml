@@ -143,7 +143,7 @@ definitions:
       service_id:
         type: integer
     type: object
-  dto.APPAddHttpInput:
+  dto.APPAddInput:
     properties:
       app_id:
         type: string
@@ -197,7 +197,7 @@ definitions:
       total:
         type: integer
     type: object
-  dto.APPUpdateHttpInput:
+  dto.APPUpdateInput:
     properties:
       app_id:
         type: string
@@ -261,7 +261,8 @@ definitions:
   dto.ChangePwdInput:
     properties:
       password:
-        description: 密码
+        description: OldPassword string `json:"old_password" form:"old_password" comment:"旧密码"
+          example:"123456" validate:"required"` // 旧密码
         example: "123456"
         type: string
     required:
@@ -293,6 +294,9 @@ definitions:
     type: object
   dto.DashboardServiceStatItemOutput:
     properties:
+      load_type:
+        description: 类型
+        type: integer
       name:
         description: 分类名
         type: string
@@ -543,6 +547,8 @@ definitions:
     type: object
   dto.ServiceStatOutput:
     properties:
+      service_name:
+        type: string
       today:
         description: 今日流量
         items:
@@ -674,6 +680,8 @@ definitions:
     type: object
   dto.StatisticsOutput:
     properties:
+      app_name:
+        type: string
       today:
         items:
           type: integer
@@ -683,16 +691,17 @@ definitions:
           type: integer
         type: array
     required:
+    - app_name
     - today
     - yesterday
     type: object
   middleware.Response:
     properties:
-      data: {}
-      errmsg:
-        type: string
-      errno:
+      code:
         type: integer
+      data: {}
+      message:
+        type: string
       stack: {}
       trace_id: {}
     type: object
@@ -837,7 +846,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/dto.APPAddHttpInput'
+          $ref: '#/definitions/dto.APPAddInput'
       produces:
       - application/json
       responses:
@@ -982,7 +991,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/dto.APPUpdateHttpInput'
+          $ref: '#/definitions/dto.APPUpdateInput'
       produces:
       - application/json
       responses:
@@ -1240,12 +1249,12 @@ paths:
         type: string
       - description: 每页条数
         in: query
-        name: page_size
+        name: limit
         required: true
         type: string
       - description: 页数
         in: query
-        name: page_no
+        name: page
         required: true
         type: string
       produces:

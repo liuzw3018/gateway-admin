@@ -30,6 +30,9 @@ func (gr *GrpcRule) Find(c *gin.Context, tx *gorm.DB, search *GrpcRule) (*GrpcRu
 	if err != nil {
 		return nil, err
 	}
+	if out.Port == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
 	return out, nil
 }
 

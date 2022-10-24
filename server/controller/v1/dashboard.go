@@ -8,6 +8,7 @@ import (
 	"github.com/liuzw3018/gateway_admin/middleware"
 	"github.com/liuzw3018/gateway_admin/public"
 	"github.com/pkg/errors"
+	"math/rand"
 	"time"
 )
 
@@ -42,14 +43,14 @@ func DashboardApiRegister(router *gin.RouterGroup) {
 // @Router /api/dashboard/panelGroupData [get]
 func (d *DashboardApi) PanelGroupData(c *gin.Context) {
 	serviceInfo := &dao.ServiceInfo{}
-	_, serviceNum, err := serviceInfo.PageList(c, lib.GORMDefaultPool, &dto.ServiceListInput{PageSize: 1, PageNo: 1})
+	_, serviceNum, err := serviceInfo.PageList(c, lib.GORMDefaultPool, &dto.ServiceListInput{Limit: 1, Page: 1})
 	if err != nil {
 		middleware.ResponseError(c, 2002, err)
 		return
 	}
 
 	appInfo := &dao.App{}
-	_, appNum, err := appInfo.APPList(c, lib.GORMDefaultPool, &dto.APPListInput{PageNo: 1, PageSize: 1})
+	_, appNum, err := appInfo.APPList(c, lib.GORMDefaultPool, &dto.APPListInput{Page: 1, Limit: 1})
 	if err != nil {
 		middleware.ResponseError(c, 2002, err)
 		return
@@ -74,19 +75,21 @@ func (d *DashboardApi) PanelGroupData(c *gin.Context) {
 // @Success 200 {object} middleware.Response{data=dto.DashboardFlowStatOutput} "success"
 // @Router /api/dashboard/flowStat [get]
 func (d *DashboardApi) FlowStat(c *gin.Context) {
+
+	rand.Seed(time.Now().UnixNano())
 	// 统计数据
 	var todayList []int64
 	var yesterdayList []int64
 	for i := 0; i <= time.Now().Hour(); i++ {
-		todayList = append(todayList, 0)
+		todayList = append(todayList, rand.Int63n(300))
 	}
 	for i := 0; i <= 23; i++ {
-		yesterdayList = append(yesterdayList, 0)
+		yesterdayList = append(yesterdayList, rand.Int63n(300))
 	}
 
 	middleware.ResponseSuccess(c, &dto.DashboardFlowStatOutput{
-		Today:     todayList,
-		Yesterday: yesterdayList,
+		Today:     []int64{220, 182, 191, 134, 150, 120, 110, 125, 145, 122, 165, 122},
+		Yesterday: []int64{120, 110, 125, 145, 122, 165, 122, 220, 182, 191, 134, 150},
 	})
 }
 

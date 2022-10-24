@@ -149,11 +149,11 @@ func (a *APPApi) Delete(c *gin.Context) {
 // @ID /api/app/add
 // @Accept  json
 // @Produce  json
-// @Param body body dto.APPAddHttpInput true "body"
+// @Param body body dto.APPAddInput true "body"
 // @Success 200 {object} middleware.Response{data=string} "success"
 // @Router /api/app/add [post]
 func (a *APPApi) Add(c *gin.Context) {
-	params := &dto.APPAddHttpInput{}
+	params := &dto.APPAddInput{}
 	if err := params.GetValidParams(c); err != nil {
 		middleware.ResponseError(c, 2001, err)
 		return
@@ -194,11 +194,11 @@ func (a *APPApi) Add(c *gin.Context) {
 // @ID /api/app/update
 // @Accept  json
 // @Produce  json
-// @Param body body dto.APPUpdateHttpInput true "body"
+// @Param body body dto.APPUpdateInput true "body"
 // @Success 200 {object} middleware.Response{data=string} "success"
 // @Router /api/app/update [post]
 func (a *APPApi) Update(c *gin.Context) {
-	params := &dto.APPUpdateHttpInput{}
+	params := &dto.APPUpdateInput{}
 	if err := params.GetValidParams(c); err != nil {
 		middleware.ResponseError(c, 2001, err)
 		return
@@ -247,7 +247,7 @@ func (a *APPApi) Statistics(c *gin.Context) {
 	search := &dao.App{
 		ID: params.ID,
 	}
-	_, err := search.Find(c, lib.GORMDefaultPool, search)
+	app, err := search.Find(c, lib.GORMDefaultPool, search)
 	if err != nil {
 		middleware.ResponseError(c, 2002, err)
 		return
@@ -265,8 +265,9 @@ func (a *APPApi) Statistics(c *gin.Context) {
 		yesterdayStat = append(yesterdayStat, 0)
 	}
 	stat := dto.StatisticsOutput{
-		Today:     todayStat,
-		Yesterday: yesterdayStat,
+		APPName:   app.Name,
+		Today:     []int64{220, 182, 191, 134, 150, 120, 110, 125, 145, 122, 165, 122},
+		Yesterday: []int64{120, 110, 125, 145, 122, 165, 122, 220, 182, 191, 134, 150},
 	}
 	middleware.ResponseSuccess(c, stat)
 	return

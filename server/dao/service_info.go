@@ -49,14 +49,14 @@ func (s *ServiceInfo) PageList(c *gin.Context, tx *gorm.DB, param *dto.ServiceLi
 	var (
 		total  int64
 		list   []ServiceInfo
-		offset = (param.PageNo - 1) * param.PageSize
+		offset = (param.Page - 1) * param.Limit
 	)
 	query := tx.WithContext(c)
 	query = query.Table(s.TableName()).Where("is_delete=0")
 	if param.Info != "" {
 		query = query.Where("service_name like ? or service_desc like ?", "%"+param.Info+"%", "%"+param.Info+"%")
 	}
-	if err := query.Limit(param.PageSize).
+	if err := query.Limit(param.Limit).
 		Offset(offset).
 		Order("id desc").
 		Find(&list).
@@ -64,7 +64,7 @@ func (s *ServiceInfo) PageList(c *gin.Context, tx *gorm.DB, param *dto.ServiceLi
 		return nil, 0, err
 	}
 
-	query.Limit(param.PageSize).Offset(offset).Count(&total)
+	query.Limit(param.Limit).Offset(offset).Count(&total)
 	return list, total, nil
 }
 
@@ -78,6 +78,7 @@ func (s *ServiceInfo) Detail(c *gin.Context, tx *gorm.DB, search *ServiceInfo) (
 	}
 	httpRule := &HttpRule{ServiceID: search.ID}
 	httpRule, err := httpRule.Find(c, tx, httpRule)
+	//log.Println("http", httpRule)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, err
 	}

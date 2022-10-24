@@ -250,7 +250,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.APPAddHttpInput"
+                            "$ref": "#/definitions/dto.APPAddInput"
                         }
                     }
                 ],
@@ -490,7 +490,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.APPUpdateHttpInput"
+                            "$ref": "#/definitions/dto.APPUpdateInput"
                         }
                     }
                 ],
@@ -926,14 +926,14 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "每页条数",
-                        "name": "page_size",
+                        "name": "limit",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
                         "description": "页数",
-                        "name": "page_no",
+                        "name": "page",
                         "in": "query",
                         "required": true
                     }
@@ -1321,7 +1321,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.APPAddHttpInput": {
+        "dto.APPAddInput": {
             "type": "object",
             "required": [
                 "app_id",
@@ -1403,7 +1403,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.APPUpdateHttpInput": {
+        "dto.APPUpdateInput": {
             "type": "object",
             "required": [
                 "id",
@@ -1499,7 +1499,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "password": {
-                    "description": "密码",
+                    "description": "OldPassword string ` + "`" + `json:\"old_password\" form:\"old_password\" comment:\"旧密码\" example:\"123456\" validate:\"required\"` + "`" + ` // 旧密码",
                     "type": "string",
                     "example": "123456"
                 }
@@ -1544,6 +1544,10 @@ const docTemplate = `{
         "dto.DashboardServiceStatItemOutput": {
             "type": "object",
             "properties": {
+                "load_type": {
+                    "description": "类型",
+                    "type": "integer"
+                },
                 "name": {
                     "description": "分类名",
                     "type": "string"
@@ -1877,6 +1881,9 @@ const docTemplate = `{
         "dto.ServiceStatOutput": {
             "type": "object",
             "properties": {
+                "service_name": {
+                    "type": "string"
+                },
                 "today": {
                     "description": "今日流量",
                     "type": "array",
@@ -2039,10 +2046,14 @@ const docTemplate = `{
         "dto.StatisticsOutput": {
             "type": "object",
             "required": [
+                "app_name",
                 "today",
                 "yesterday"
             ],
             "properties": {
+                "app_name": {
+                    "type": "string"
+                },
                 "today": {
                     "type": "array",
                     "items": {
@@ -2060,12 +2071,12 @@ const docTemplate = `{
         "middleware.Response": {
             "type": "object",
             "properties": {
-                "data": {},
-                "errmsg": {
-                    "type": "string"
-                },
-                "errno": {
+                "code": {
                     "type": "integer"
+                },
+                "data": {},
+                "message": {
+                    "type": "string"
                 },
                 "stack": {},
                 "trace_id": {}

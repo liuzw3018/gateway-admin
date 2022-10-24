@@ -9,6 +9,7 @@ import (
 	"github.com/liuzw3018/gateway_admin/middleware"
 	"github.com/liuzw3018/gateway_admin/public"
 	"github.com/pkg/errors"
+	"math/rand"
 	"strings"
 	"time"
 )
@@ -38,13 +39,13 @@ func ServiceApiRegister(router *gin.RouterGroup) {
 		}
 		srvTCPApi := srvApi.Group("/tcp")
 		{
-			srvTCPApi.POST("/add")
-			srvTCPApi.POST("/update")
+			srvTCPApi.POST("/add", srv.AddTCP)
+			srvTCPApi.POST("/update", srv.UpdateTCP)
 		}
 		srvGRPCApi := srvApi.Group("/grpc")
 		{
-			srvGRPCApi.POST("/add")
-			srvGRPCApi.POST("/update")
+			srvGRPCApi.POST("/add", srv.AddGRPC)
+			srvGRPCApi.POST("/update", srv.UpdateGRPC)
 		}
 	}
 }
@@ -57,8 +58,8 @@ func ServiceApiRegister(router *gin.RouterGroup) {
 // @Accept json
 // @Produce json
 // @Param info query string false "关键词"
-// @Param page_size query string true "每页条数"
-// @Param page_no query string true "页数"
+// @Param limit query string true "每页条数"
+// @Param page query string true "页数"
 // @Success 200 {object} middleware.Response{data=dto.ServiceListOutput} "success"
 // @Router /api/service/list [get]
 func (s *ServiceApi) List(c *gin.Context) {
@@ -68,14 +69,8 @@ func (s *ServiceApi) List(c *gin.Context) {
 		return
 	}
 
-	tx, err := lib.GetGormPool("default")
-	if err != nil {
-		middleware.ResponseError(c, 2000, err)
-		return
-	}
-
 	serviceInfo := &dao.ServiceInfo{}
-	list, total, err := serviceInfo.PageList(c, tx, params)
+	list, total, err := serviceInfo.PageList(c, lib.GORMDefaultPool, params)
 	if err != nil {
 		middleware.ResponseError(c, 2001, err)
 		return
@@ -83,7 +78,7 @@ func (s *ServiceApi) List(c *gin.Context) {
 
 	var outList []dto.ServiceListItemOutput
 	for _, listItem := range list {
-		serviceDetail, err := listItem.Detail(c, tx, &listItem)
+		serviceDetail, err := listItem.Detail(c, lib.GORMDefaultPool, &listItem)
 		if err != nil {
 			middleware.ResponseError(c, 2002, err)
 			return
@@ -93,6 +88,7 @@ func (s *ServiceApi) List(c *gin.Context) {
 		clusterIP := lib.GetStringConf("base.cluster.cluster_ip")
 		clusterPort := lib.GetStringConf("base.cluster.cluster_port")
 		clusterSSLPort := lib.GetStringConf("base.cluster.cluster_ssl_port")
+		//log.Println(serviceDetail.Info.ServiceName, serviceDetail.Info.ID, serviceDetail)
 		switch serviceDetail.Info.LoadType {
 		case public.LoadTypeHttp:
 			if serviceDetail.HttpRule.RuleType == public.HTTPRuleTypePrefixURL && serviceDetail.HttpRule.NeedHttps == 0 {
@@ -114,11 +110,12 @@ func (s *ServiceApi) List(c *gin.Context) {
 			serviceAddr = fmt.Sprintf("%s:%d", clusterIP, serviceDetail.GRPCRule.Port)
 		}
 
-		ipList := serviceDetail.LoadBalance.GetIPListByModel(c, tx)
+		ipList := serviceDetail.LoadBalance.GetIPListByModel(c, lib.GORMDefaultPool)
 		outItem := dto.ServiceListItemOutput{
 			ID:          listItem.ID,
 			ServiceName: listItem.ServiceName,
 			ServiceDesc: listItem.ServiceDesc,
+			LoadType:    listItem.LoadType,
 			ServiceAddr: serviceAddr,
 			QPS:         0,
 			QPD:         0,
@@ -229,38 +226,33 @@ func (s *ServiceApi) Stat(c *gin.Context) {
 		return
 	}
 
-	//tx, err := lib.GetGormPool("default")
-	//if err != nil {
-	//	middleware.ResponseError(c, 2000, err)
-	//	return
-	//}
-	//
-	//serviceInfo := &dao.ServiceInfo{ID: params.ID}
-	//serviceInfo, err = serviceInfo.Find(c, tx, serviceInfo)
-	//if err != nil {
-	//	middleware.ResponseError(c, 2001, err)
-	//	return
-	//}
+	serviceInfo := &dao.ServiceInfo{ID: params.ID}
+	serviceInfo, err := serviceInfo.Find(c, lib.GORMDefaultPool, serviceInfo)
+	if err != nil {
+		middleware.ResponseError(c, 2001, err)
+		return
+	}
 	//
 	//serviceDetail, err := serviceInfo.Detail(c, tx, serviceInfo)
 	//if err != nil {
 	//	middleware.ResponseError(c, 2002, err)
 	//	return
 	//}
-
+	rand.Seed(time.Now().UnixNano())
 	// 统计数据
 	var todayList []int64
 	var yesterdayList []int64
 	for i := 0; i <= time.Now().Hour(); i++ {
-		todayList = append(todayList, 0)
+		todayList = append(todayList, rand.Int63n(300))
 	}
 	for i := 0; i <= 23; i++ {
-		yesterdayList = append(yesterdayList, 0)
+		yesterdayList = append(yesterdayList, rand.Int63n(300))
 	}
 
 	middleware.ResponseSuccess(c, &dto.ServiceStatOutput{
-		Today:     todayList,
-		Yesterday: yesterdayList,
+		ServiceName: serviceInfo.ServiceName,
+		Today:       []int64{220, 182, 191, 134, 150, 120, 110, 125, 145, 122, 165, 122},
+		Yesterday:   []int64{120, 110, 125, 145, 122, 165, 122, 220, 182, 191, 134, 150},
 	})
 }
 
@@ -281,7 +273,7 @@ func (s *ServiceApi) AddHTTP(c *gin.Context) {
 		return
 	}
 
-	if len(strings.Split(params.IpList, "\n")) != len(strings.Split(params.WeightList, "\n")) {
+	if len(strings.Split(params.IpList, ",")) != len(strings.Split(params.WeightList, ",")) {
 		middleware.ResponseError(c, 2003, errors.New("IP列表与权重列表数量不一致"))
 		return
 	}
@@ -384,7 +376,7 @@ func (s *ServiceApi) UpdateHTTP(c *gin.Context) {
 		return
 	}
 
-	if len(strings.Split(params.IpList, "\n")) != len(strings.Split(params.WeightList, "\n")) {
+	if len(strings.Split(params.IpList, ",")) != len(strings.Split(params.WeightList, ",")) {
 		middleware.ResponseError(c, 2003, errors.New("IP列表与权重列表数量不一致"))
 		return
 	}
